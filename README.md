@@ -35,7 +35,7 @@ pip install -r requirements.txt
 ### 4. Create API KEY:
 🔓 Enable Gemini API
 ```
-Visit: https://console.cloud.google.com/apis/api/generativelanguage.googleapis.com
+https://console.cloud.google.com/apis/api/generativelanguage.googleapis.com
 ```
 Select or create a Google Cloud project
 
@@ -43,7 +43,7 @@ Click "Enable"
 
 🔑 Get Your API Key
 ```
-Go to: https://makersuite.google.com/app/apikey
+https://makersuite.google.com/app/apikey
 ```
 Click Create API key and copy it
 
