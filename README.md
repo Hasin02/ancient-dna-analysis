@@ -23,17 +23,17 @@ https://docs.google.com/spreadsheets/d/11_7rotOIU48oeZDY_jwu918tl_2fx2VpuEF7jGNO
 git clone https://github.com/Hasin02/ancient-dna-analysis.git
 cd ancient-dna-analysis
 ```
-2. Create a Virtual Environment
+###2. Create a Virtual Environment
 ```
 python -m venv venv
 .\venv\Scripts\activate  # For Windows
 ```
-3. Install Dependencies: 
+###3. Install Dependencies: 
 ```
 pip install -r requirements.txt  
 ```
 
-4. Run the Server
+###4. Run the Server
 ```
 python main.py
 ```
@@ -41,7 +41,7 @@ The server will run at http://localhost:8000
 
 Open http://localhost:8000/docs
 
-##🔌 API Endpoints
+🔌 API Endpoints
 
 
 #📤 POST /upload-csv/
