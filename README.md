@@ -166,6 +166,8 @@ Logging is implemented to help debug issues.
 🧪 Testing
 Create a tests.py to test:
 
+### If test.py DOESN'T RUN RENAME IT TO test_app.py or app_test.py
+
 CSV upload validation
 
 DNA sequence generation
