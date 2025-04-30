@@ -41,10 +41,10 @@ The server will run at http://localhost:8000
 
 Open http://localhost:8000/docs
 
-🔌 API Endpoints
+##🔌 API Endpoints
 
 
-📤 POST /upload-csv/
+#📤 POST /upload-csv/
 
 
 Upload a CSV file containing ancient remains data.
