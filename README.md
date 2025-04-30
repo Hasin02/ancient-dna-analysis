@@ -166,7 +166,7 @@ Logging is implemented to help debug issues.
 ### Testing 🧪
 Create a tests.py to test:
 
-### If test.py DOESN'T RUN  test_app.py❗❗❗❗
+### If test.py DOESN'T RUN, Try Running test_app.py❗❗❗❗
 
 CSV upload validation
 
