@@ -1,6 +1,6 @@
 # Ancient DNA Analysis API
 
-![GitHub Workflow Status](https://img.shields.io/github/workflow/status/yourusername/ancient-dna-analysis/Run%20Tests)
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/Hasin02/ancient-dna-analysis/Run%20Tests)
 ![Python](https://img.shields.io/badge/python-3.11-blue)
 ![FastAPI](https://img.shields.io/badge/fastapi-0.115.0-green)
 
