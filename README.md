@@ -60,9 +60,9 @@ The server will run at http://localhost:8000
 
 Open http://localhost:8000/docs
 
-🔌 API Endpoints
+### API Endpoints 🔌
 
-📤 POST /upload-csv/
+### POST /upload-csv/ 📤
 
 
 Upload a CSV file containing ancient remains data.
@@ -74,7 +74,7 @@ curl -X POST -F "file=@CLEANED_DATA.csv" http://localhost:8000/upload-csv/
 ```
 
 
-🧬 POST /generate-sequence/
+### POST /generate-sequence/ 🧬
 Generate a DNA sequence for a given sample ID.
 
 Request Body:
@@ -87,8 +87,7 @@ curl -X POST -H "Content-Type: application/json" -d '{"id": "id_0010"}' http://l
 ```
 
 
-
-🔍 POST /compare-sequences/
+### POST /compare-sequences/ 🔍
 Compare DNA sequences of two samples.
 
 Request Body:
@@ -102,7 +101,7 @@ curl -X POST -H "Content-Type: application/json" -d '{"id1": "id_0010", "id2": "
 
 
 
-🤖 POST /ask-me-anything/
+### POST /ask-me-anything/ 🤖
 Ask natural language questions about how the API works.
 
 Request Body:
@@ -117,7 +116,7 @@ curl -X POST -H "Content-Type: application/json" -d '{"question": "What does thi
 
 
 
-🧠 How DNA Sequence Generation Works
+### How DNA Sequence Generation Works 🧠
 The DNA sequence is generated using a function in func.py:
 
 It uses a seeded random generator based on ID, region, and age
@@ -128,14 +127,15 @@ Randomly repeats them until a long sequence (~1 billion bases) is generated
 
 If no valid motifs are found in the seed, it returns "x"
 
-🔗 How Sequence Comparison Works
+### How Sequence Comparison Works 🔗
+
 The similarity score (0–100) is based on:
 
 🔢 Position-based match (50% weight): Uses difflib.SequenceMatcher
 
 🔠 Motif-based match (50% weight): Compares 4-letter substring overlap
 
-To improve performance:
+### To improve performance:
 
 Sequences are truncated (e.g., first 100,000 characters)
 
@@ -163,10 +163,10 @@ Consider using:
 
 Logging is implemented to help debug issues.
 
-🧪 Testing
+### Testing 🧪
 Create a tests.py to test:
 
-### If test.py DOESN'T RUN RENAME IT TO test_app.py or app_test.py
+### If test.py DOESN'T RUN RENAME IT AS test_app.py or app_test.py ❗❗❗❗
 
 CSV upload validation
 
