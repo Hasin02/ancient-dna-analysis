@@ -37,7 +37,9 @@ pip install -r requirements.txt
 ```
 python main.py
 ```
-The server will run at http://localhost:8000.
+The server will run at http://localhost:8000
+
+
 🔌 API Endpoints
 📤 POST /upload-csv/
 Upload a CSV file containing ancient remains data.
