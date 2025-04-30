@@ -76,13 +76,6 @@ A FastAPI-based API for analyzing ancient DNA sequences. Upload CSV files, gener
    $env:GOOGLE_API_KEY="your-google-api-key"
    ```
 
-5. **Prepare Templates**:
-   ```powershell
-   mkdir templates
-   mkdir static
-   echo "<html><body><h1>Ancient DNA Analysis API</h1></body></html>" > templates/index.html
-   ```
-
 ## Running Locally
 ```powershell
 python main.py
