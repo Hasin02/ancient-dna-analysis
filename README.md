@@ -1,205 +1,118 @@
-# 🧬 Ancient DNA Analysis API
+**Ancient DNA Analysis API - Documentation**
 
-This **FastAPI** application allows forensic researchers to analyze ancient DNA data. It supports:
+**1. Overview**
+The Ancient DNA Analysis API is a FastAPI-powered application designed for forensic research involving ancient remains. The API facilitates uploading ancient DNA datasets, generating long DNA sequences from input parameters, comparing genetic similarity between samples, and querying the system using natural language. It includes a user-friendly web interface and integrates Gemini's large language model for natural query support.
 
-- 📄 Uploading CSV files with ancient remains data
-- 🧬 Generating full DNA sequences using a custom logic
-- 🔬 Comparing two DNA sequences for similarity
-- 💬 Asking natural language questions about the API using Google Gemini
+**2. Features**
+- Upload CSV data containing sample information (id, region, age, seed)
+- Generate a long DNA sequence for a given sample
+- Compare DNA sequences between two samples
+- Ask natural language questions regarding the API
+- Frontend interface using Jinja2 and JavaScript
+- Real-time loading indicators
+- Fully tested using Pytest
 
----
+**3. Installation**
 
-## 🚀 Setup Instructions
-
-### CSV FILE 
-Link:
-```
-https://docs.google.com/spreadsheets/d/11_7rotOIU48oeZDY_jwu918tl_2fx2VpuEF7jGNOHZw/edit?usp=sharing
-```
-
-### 1. Clone the Repository
-
-```
+**3.1 Clone the Repository**
+```bash
 git clone https://github.com/Hasin02/ancient-dna-analysis.git
 cd ancient-dna-analysis
 ```
-### 2. Create a Virtual Environment
-```
+
+**3.2 Create Virtual Environment**
+```bash
 python -m venv venv
-.\venv\Scripts\activate  # For Windows
+# Windows:
+venv\Scripts\activate
+# macOS/Linux:
+source venv/bin/activate
 ```
-### 3. Install Dependencies: 
-```
-pip install -r requirements.txt  
-```
-### 4. Create API KEY:
-🔓 Enable Gemini API
-```
-https://console.cloud.google.com/apis/api/generativelanguage.googleapis.com
-```
-Select or create a Google Cloud project
 
-Click "Enable"
+**3.3 Install Dependencies**
+```bash
+pip install -r requirements.txt
+```
 
-🔑 Get Your API Key
+**3.4 Environment Setup**
+Create a `.env` file in the project root:
 ```
-https://makersuite.google.com/app/apikey
+GOOGLE_API_KEY=your_google_api_key
 ```
-Click Create API key and copy it
 
-🔐 Set the API Key in Terminal (PowerShell) same Virtual env
-
-```
-$env:GOOGLE_API_KEY="your_api_key_here"
-```
-### 5. Run the Server
-```
+**4. Run the Application**
+```bash
 python main.py
 ```
-The server will run at http://localhost:8000
+Access the frontend at: http://localhost:8000/
+Access the API documentation at: http://localhost:8000/docs
 
-Open http://localhost:8000/docs
+**5. API Endpoints**
 
-### API Endpoints 🔌
+**POST /upload-csv/**
+Uploads a CSV file containing ancient remains data.
+- Required columns: id, region, age, seed
 
-### POST /upload-csv/ 📤
+**POST /generate-sequence/**
+Generates a DNA sequence based on a provided ID.
+- Request body: `{ "id": "id_0010" }`
 
+**POST /compare-sequences/**
+Compares DNA sequences of two samples.
+- Request body: `{ "id1": "id_0010", "id2": "id_0011" }`
 
-Upload a CSV file containing ancient remains data.
+**POST /ask-me-anything/**
+Uses Gemini LLM to respond to natural language questions about the API.
+- Request body: `{ "question": "What does this API do?" }`
 
-Required Columns: id, region, age, seed
-```
-curl -X POST -F "file=@CLEANED_DATA.csv" http://localhost:8000/upload-csv/
+**6. Sequence Generation Logic**
+- Input: ID, region, age, and DNA seed
+- Region determines a list of valid DNA motifs
+- Motifs are extracted and randomly repeated using a seeded RNG
+- Generates a long string (up to 1 billion characters)
 
-```
+**7. Sequence Comparison Logic**
+- Sequences truncated to 5,000 characters
+- 50% weight: Position-based similarity using difflib
+- 50% weight: Motif overlap of 4-character subsequences
 
-
-### POST /generate-sequence/ 🧬
-Generate a DNA sequence for a given sample ID.
-
-Request Body:
-```
-{ "id": "id_0010" }
-```
-Example:
-```
-curl -X POST -H "Content-Type: application/json" -d '{"id": "id_0010"}' http://localhost:8000/generate-sequence/
-```
-
-
-### POST /compare-sequences/ 🔍
-Compare DNA sequences of two samples.
-
-Request Body:
-```
-{"id1": "id_0010", "id2": "id_0011"}
-```
-Example:
-```
-curl -X POST -H "Content-Type: application/json" -d '{"id1": "id_0010", "id2": "id_0011"}' http://localhost:8000/compare-sequences/
-```
-
-
-
-### POST /ask-me-anything/ 🤖
-Ask natural language questions about how the API works.
-
-Request Body:
-```
-{"question": "What does this API do?"}
-```
-Example:
-```
-curl -X POST -H "Content-Type: application/json" -d '{"question": "What does this API do?"}' http://localhost:8000/ask-me-anything/
-```
-
-
-
-
-### How DNA Sequence Generation Works 🧠
-The DNA sequence is generated using a function in func.py:
-
-It uses a seeded random generator based on ID, region, and age
-
-Extracts valid 4-letter DNA motifs from the seed
-
-Randomly repeats them until a long sequence (~1 billion bases) is generated
-
-If no valid motifs are found in the seed, it returns "x"
-
-### How Sequence Comparison Works 🔗
-
-The similarity score (0–100) is based on:
-
-🔢 Position-based match (50% weight): Uses difflib.SequenceMatcher
-
-🔠 Motif-based match (50% weight): Compares 4-letter substring overlap
-
-### To improve performance:
-
-Sequences are truncated (e.g., first 100,000 characters)
-
-Set operations are used for fast motif comparison
-
-⚙️ Performance Notes
-DNA generation is CPU-heavy (due to many loop iterations)
-
-Sequence comparison is optimized, but still resource-intensive
-
-Data is stored in-memory for simplicity (not ideal for large datasets)
-
-Consider using:
-
-✅ Caching with Redis
-
-✅ SQLite/PostgreSQL for persistent storage
-
-❗ Error Handling
-🚫 400 – Invalid CSV file or missing columns
-
-🔍 404 – Sample ID not found
-
-💥 500 – Sequence generation/comparison failure (e.g., memory issue)
-
-Logging is implemented to help debug issues.
-
-### Testing 🧪
-Create a tests.py to test:
-
-### If test.py DOESN'T RUN, Try Running test_app.py❗❗❗❗
-
-CSV upload validation
-
-DNA sequence generation
-
-Sequence comparison logic
-```
+**8. Testing**
+Test suite written using Pytest.
+Run tests with:
+```bash
 pytest tests.py
 ```
-or
+Tests include:
+- CSV upload validation
+- Sequence generation
+- Sequence comparison
+- Ask-me-anything interaction
+
+**9. Frontend Interface**
+- Located in `templates/index.html` and `static/style.css`
+- HTML forms for each API operation
+- JavaScript provides real-time loading feedback and result display
+
+**10. Deployment**
+
+**Render Deployment (Recommended)**
+- Connect GitHub repo to Render
+- Set build command: `pip install -r requirements.txt && python main.py`
+- Set environment variable: `GOOGLE_API_KEY`
+
+**11. Requirements**
 ```
-pytest tests_app.py
-```
-Test IDs like id_0010 and id_0011 using your CLEANED_DATA.csv.
-
-
-### If you want nicer test output, install:
-
-```
-pip install pytest-rich
-```
-And run:
-
-```
-pytest --rich
+fastapi>=0.115.0
+uvicorn>=0.30.6
+pandas>=2.2.2
+langchain-google-genai>=1.0.10
+python-dotenv>=1.0.1
+pytest>=8.3.3
+langchain>=0.2.16
+python-multipart>=0.0.12
+jinja2>=3.1.2
 ```
 
+**12. Repository**
+GitHub: https://github.com/Hasin02/ancient-dna-analysis
 
-GitHub Repository
-Link to repository : https://github.com/Hasin02/ancient-dna-analysis.git
-Notes
-
-The Google API key is required for the /ask-me-anything/ endpoint.
-The CLEANED_DATA.csv file contains large seed strings; ensure sufficient memory when processing.
-For production, implement caching (e.g., Redis) for generated sequences to reduce computation time.
-Consider database storage for large datasets and persistent data.
