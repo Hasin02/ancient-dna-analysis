@@ -1,201 +1,206 @@
-Ancient DNA Analysis API
-This is a FastAPI-based API for analyzing ancient DNA sequences. It allows users to upload CSV files containing sample data, generate DNA sequences, retrieve cached sequences, compare sequences for similarity, and ask questions about the API using a language model.
-Features
+# Ancient DNA Analysis API
 
-Upload CSV: Process CSV files with sample data (id, region, age, seed) to generate and cache DNA sequences.
-Generate Sequence: Retrieve a cached DNA sequence by sample ID.
-Compare Sequences: Calculate a similarity score between two cached DNA sequences.
-Ask Me Anything: Query the API’s functionality using natural language via Gemini LLM.
-In-Memory Storage: Uses an in-memory cache (sequence_cache) with a JSON file (sequence_cache.json) for persistence.
-Modular Codebase: Core logic split into main.py (API endpoints) and utils.py (utility functions).
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/yourusername/ancient-dna-analysis/Run%20Tests)
+![Python](https://img.shields.io/badge/python-3.11-blue)
+![FastAPI](https://img.shields.io/badge/fastapi-0.115.0-green)
 
-Project Structure
-├── main.py                 # FastAPI app and endpoints
-├── utils.py               # Utility functions (sequence generation, similarity, cache management)
-├── requirements.txt       # Python dependencies
-├── sample.csv             # Sample CSV for testing
-├── sequence_cache.json    # Cache file (generated at runtime)
+A FastAPI-based API for analyzing ancient DNA sequences. Upload CSV files, generate DNA sequences, compare sequence similarities, and query API functionality using Gemini LLM.
+
+## Features
+- **CSV Upload**: Process sample data (`id`, `region`, `age`, `seed`) to generate and cache DNA sequences.
+- **Sequence Retrieval**: Fetch cached sequences by sample ID.
+- **Sequence Comparison**: Calculate similarity scores between sequences.
+- **Natural Language Query**: Ask questions via `/ask-me-anything/`.
+- **In-Memory Storage**: Uses `sequence_cache` with `sequence_cache.json` fallback.
+- **Modular Code**: Split into `main.py` (API) and `utils.py` (utilities).
+
+## Project Structure
+```
+├── main.py
+├── utils.py
+├── requirements.txt
+├── sample.csv
+├── sequence_cache.json
 ├── templates/
-│   └── index.html         # Homepage template
-├── static/                # Static files (CSS, JS, etc.)
+│   └── index.html
+├── static/
 └── .github/
     └── workflows/
-        └── test.yml       # GitHub Actions workflow
+        └── test.yml
+```
 
-Prerequisites
+## Prerequisites
+- Python 3.11+
+- Git
+- Render account (for deployment)
+- Google API key (for Gemini LLM)
+- Csv File link : https://docs.google.com/spreadsheets/d/11_7rotOIU48oeZDY_jwu918tl_2fx2VpuEF7jGNOHZw/edit?usp=sharing
+- Generate API :
+  ```Enable Gemini API: Go to
+      https://console.cloud.google.com/
+  ```
+    Create a new project (or select an existing one).
+    Navigate to APIs & Services > Library.
+    Search for "Gemini API" and click Enable.
+- Create API Key :
+    Go to APIs & Services > Credentials.
+    Click Create Credentials > API Key.
 
-Python 3.11+
-Virtual environment (recommended)
-Render account for deployment
-Google API key for Gemini LLM (set as GOOGLE_API_KEY)
 
-Setup
-1. Clone the Repository
-git clone https://github.com/yourusername/ancient-dna-analysis.git
-cd ancient-dna-analysis
+## Installation
 
-2. Create and Activate Virtual Environment
-python -m venv venv
-# Windows
-.\venv\Scripts\activate
-# macOS/Linux
-source venv/bin/activate
+1. **Clone the Repository**:
+   ```powershell
+   git clone https://github.com/yourusername/ancient-dna-analysis.git
+   cd ancient-dna-analysis
+   ```
 
-3. Install Dependencies
-pip install -r requirements.txt
+2. **Set Up Virtual Environment**:
+   ```powershell
+   python -m venv venv
+   .\venv\Scripts\activate
+   ```
 
-4. Set Environment Variables
-Create a .env file in the project root:
-echo GOOGLE_API_KEY=your-google-api-key > .env
+3. **Install Dependencies**:
+   ```powershell
+   pip install -r requirements.txt
+   ```
 
-5. Verify Templates and Static Files
-Ensure the templates/ and static/ directories exist:
-mkdir templates static
-echo "<html><body><h1>Ancient DNA Analysis API</h1></body></html>" > templates/index.html
+4. **Configure Environment**:
+   Create `.env`:
+   ```powershell
+   echo GOOGLE_API_KEY=your-google-api-key > .env
+   ```
+   or
+   ```
+   $env:GOOGLE_API_KEY="your-google-api-key"
+   ```
 
-Running Locally
+5. **Prepare Templates**:
+   ```powershell
+   mkdir templates
+   mkdir static
+   echo "<html><body><h1>Ancient DNA Analysis API</h1></body></html>" > templates/index.html
+   ```
+
+## Running Locally
+```powershell
 python main.py
+```
+- Access at `http://localhost:8000`.
 
+## API Endpoints
 
-The API will run at http://localhost:8000.
-Access the homepage in a browser: http://localhost:8000.
+| Endpoint                  | Method | Description                              | Example Payload                          |
+|---------------------------|--------|------------------------------------------|------------------------------------------|
+| `/`                       | GET    | Homepage (HTML)                         | -                                        |
+| `/upload-csv/`            | POST   | Upload CSV and cache sequences          | Form: `file=@sample.csv`                 |
+| `/generate-sequence/`     | POST   | Retrieve cached sequence                | `{"id": "id_0010"}`                     |
+| `/compare-sequences/`     | POST   | Compare two sequences                   | `{"id1": "id_0010", "id2": "id_0011"}` |
+| `/ask-me-anything/`       | POST   | Query API with natural language         | `{"question": "What does this API do?"}` |
 
-Usage
-1. Upload CSV
-Create a CSV file (e.g., sample.csv):
-id,region,age,seed
-id_0010,emea,1000,agtc
-id_0011,emea,1000,agtc
+## Usage
 
-Upload it:
-curl -X POST -F "file=@sample.csv" http://localhost:8000/upload-csv/
+1. **Upload CSV**:
+   ```powershell
+   echo "id,region,age,seed" > sample.csv
+   echo "id_0010,emea,1000,agtc" >> sample.csv
+   curl -X POST -F "file=@sample.csv" http://localhost:8000/upload-csv/
+   ```
 
+2. **Retrieve Sequence**:
+   ```powershell
+   curl -X POST http://localhost:8000/generate-sequence/ -H "Content-Type: application/json" -d "{\"id\": \"id_0010\"}"
+   ```
 
-Generates DNA sequences for up to 5000 rows and caches them in sequence_cache.
-Saves cache to sequence_cache.json.
+3. **Compare Sequences**:
+   ```powershell
+   curl -X POST http://localhost:8000/compare-sequences/ -H "Content-Type: application/json" -d "{\"id1\": \"id_0010\", \"id2\": \"id_0011\"}"
+   ```
 
-2. Retrieve Sequence
-curl -X POST http://localhost:8000/generate-sequence/ -H "Content-Type: application/json" -d '{"id": "id_0010"}'
-
-
-Returns the first 1000 characters of the cached sequence.
-
-3. Compare Sequences
-curl -X POST http://localhost:8000/compare-sequences/ -H "Content-Type: application/json" -d '{"id1": "id_0010", "id2": "id_0011"}'
-
-
-Returns a similarity score (0–100).
-
-4. Ask Questions
-curl -X POST http://localhost:8000/ask-me-anything/ -H "Content-Type: application/json" -d '{"question": "What does this API do?"}'
-
-
-Answers using Gemini LLM.
-
-Testing
-Run unit tests with pytest:
+## Testing
+```powershell
 pytest tests.py
+```
+- Requires `sample.csv`.
 
+## GitHub Actions
+- **Workflow**: `.github/workflows/test.yml`
+- **Triggers**: Push/pull requests to `main`.
+- **Setup**:
+  - Add `GOOGLE_API_KEY` to GitHub Secrets:
+    - Go to Repository > Settings > Secrets and variables > Actions > New repository secret.
+    - Name: `GOOGLE_API_KEY`, Value: your API key.
 
-Tests cover all endpoints using sample.csv.
+## Deployment on Render
+1. **Push to GitHub**:
+   ```powershell
+   git add .
+   git commit -m "Deploy to Render"
+   git push origin main
+   ```
 
-GitHub Actions
-The project uses GitHub Actions for CI/CD:
+2. **Configure Render**:
+   - Create a Web Service.
+   - Link to `ancient-dna-analysis`.
+   - Settings:
+     - Runtime: Python
+     - Build: `pip install -r requirements.txt`
+     - Start: `uvicorn main:app --host 0.0.0.0 --port $PORT`
+     - Environment: `GOOGLE_API_KEY=your-google-api-key`
 
-Workflow: .github/workflows/test.yml
-Runs tests on push/pull requests to main.
-Requires GOOGLE_API_KEY in repository secrets:
-Go to Repository > Settings > Secrets and variables > Actions > New repository secret.
-Name: GOOGLE_API_KEY, Value: your API key.
+3. **Handle Cache**:
+   - `sequence_cache.json` is ephemeral.
+   - After `/upload-csv/`:
+     ```powershell
+     git add sequence_cache.json
+     git commit -m "Update sequence_cache.json"
+     git push origin main
+     ```
+   - Redeploy.
 
+4. **Test**:
+   ```powershell
+   curl https://your-render-url.onrender.com/
+   ```
 
+## Persistent Storage (Optional)
+For persistent storage:
+1. Create a PostgreSQL database in Render.
+2. Add `DATABASE_URL` to environment variables.
+3. Update `requirements.txt`:
+   ```powershell
+   echo psycopg2-binary==2.9.9 >> requirements.txt
+   ```
+4. Modify `main.py` for PostgreSQL (see issues).
 
-Deployment on Render
+## Troubleshooting
+- **Local**:
+  - Check `sequence_cache.json`:
+    ```powershell
+    type sequence_cache.json
+    ```
+  - Verify sequence length:
+    ```powershell
+    type sequence_cache.json | jq '.id_0010.sequence | length'
+    ```
+  - Ensure `templates/index.html`.
+- **Render**:
+  - Check logs.
+  - Verify `GOOGLE_API_KEY`.
+- **GitHub Actions**:
+  - Check Actions tab.
+  - Confirm `GOOGLE_API_KEY`.
 
-Push to GitHub:
-git add .
-git commit -m "Deploy to Render"
-git push origin main
+## Contributing
+1. Fork the repository.
+2. Create a branch: `git checkout -b feature-name`.
+3. Commit: `git commit -m "Add feature"`.
+4. Push: `git push origin feature-name`.
+5. Open a pull request.
 
+## License
+MIT License. See [LICENSE](LICENSE).
 
-Create Render Web Service:
-
-In Render dashboard, create a new Web Service.
-Link to your GitHub repository (ancient-dna-analysis).
-Set:
-Runtime: Python
-Build Command: pip install -r requirements.txt
-Start Command: uvicorn main:app --host 0.0.0.0 --port $PORT
-Environment Variables: GOOGLE_API_KEY=your-google-api-key
-
-
-
-
-Deploy:
-
-Deploy the service.
-Access at https://your-render-url.onrender.com.
-
-
-Handle Cache Persistence:
-
-Render’s filesystem is ephemeral, so sequence_cache.json is lost on restart.
-After running /upload-csv/, download sequence_cache.json locally:cd test-ancient-dna
-copy sequence_cache.json ../ancient-dna-analysis
-cd ../ancient-dna-analysis
-git add sequence_cache.json
-git commit -m "Update sequence_cache.json"
-git push origin main
-
-
-Redeploy to include sequence_cache.json.
-For persistent storage, consider Render’s PostgreSQL (see below).
-
-
-
-Optional: Persistent Storage with PostgreSQL
-To persist sequences across Render deployments:
-
-Create a PostgreSQL database in Render.
-Add DATABASE_URL to Render’s environment variables.
-Update requirements.txt:echo psycopg2-binary==2.9.9 >> requirements.txt
-
-
-Modify main.py to use PostgreSQL (contact maintainer for code).
-Redeploy.
-
-Troubleshooting
-
-Local Issues:
-Check sequence_cache.json:cat sequence_cache.json
-
-
-Verify sequence length:type sequence_cache.json | jq '.id_0010.sequence | length'
-
-
-Ensure templates/index.html exists.
-
-
-Render Issues:
-Check deployment logs in Render dashboard.
-Verify GOOGLE_API_KEY is set.
-
-
-GitHub Actions:
-Check workflow logs in GitHub Actions tab.
-Ensure GOOGLE_API_KEY is set in repository secrets.
-
-
-
-Contributing
-
-Fork the repository.
-Create a feature branch: git checkout -b feature-name.
-Commit changes: git commit -m "Add feature".
-Push to branch: git push origin feature-name.
-Open a pull request.
-
-License
-MIT License. See LICENSE for details.
-Contact
-For issues or suggestions, open an issue on GitHub or contact the maintainer.
+## Contact
+Open an issue on GitHub.
