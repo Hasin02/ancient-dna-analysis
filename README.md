@@ -47,7 +47,7 @@ https://makersuite.google.com/app/apikey
 ```
 Click Create API key and copy it
 
-🔐 Set the API Key in Terminal (PowerShell)
+🔐 Set the API Key in Terminal (PowerShell) same Virtual env
 
 ```
 $env:GOOGLE_API_KEY="your_api_key_here"
