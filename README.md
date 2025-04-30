@@ -178,6 +178,19 @@ pytest tests.py
 ```
 Test IDs like id_0010 and id_0011 using your CLEANED_DATA.csv.
 
+
+### If you want nicer test output, install:
+
+```
+pip install pytest-rich
+```
+And run:
+
+```
+pytest --rich
+```
+
+
 GitHub Repository
 Link to repository : https://github.com/Hasin02/ancient-dna-analysis.git
 Notes
