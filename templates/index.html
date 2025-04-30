@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Ancient DNA Analysis</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <h1>🧬 Ancient DNA Analysis Interface</h1>
+
+  <section>
+    <h2>📁 Upload CSV</h2>
+    <form id="uploadForm">
+      <input type="file" name="file" required>
+      <button type="submit">Upload</button>
+    </form>
+    <div id="uploadResult"></div>
+  </section>
+
+  <section>
+    <h2>🔬 Generate DNA Sequence</h2>
+    <form id="generateForm">
+      <input type="text" id="generate_id" name="id" placeholder="Enter Sample ID (e.g. id_0010)" required>
+      <button type="submit">Generate</button>
+    </form>
+    <pre id="generateResult"></pre>
+  </section>
+
+  <section>
+    <h2>🧪 Compare Sequences</h2>
+    <form id="compareForm">
+      <input type="text" id="id1" name="id1" placeholder="Sample ID 1" required>
+      <input type="text" id="id2" name="id2" placeholder="Sample ID 2" required>
+      <button type="submit">Compare</button>
+    </form>
+    <div id="compareResult"></div>
+  </section>
+
+  <section>
+    <h2>❓ Ask Me Anything</h2>
+    <form id="askForm">
+      <input type="text" id="question" name="question" placeholder="What does this API do?" required>
+      <button type="submit">Ask</button>
+    </form>
+    <div id="askResult"></div>
+  </section>
+
+  <script>
+    // Upload CSV
+    document.getElementById("uploadForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const output = document.getElementById("uploadResult");
+      const genOutput = document.getElementById("generateResult");
+  
+      output.innerText = "📤 Uploading and processing CSV...";
+      genOutput.innerText = "";
+  
+      try {
+        const response = await fetch("/upload-csv/", {
+          method: "POST",
+          body: formData
+        });
+        const result = await response.json();
+        output.innerText = result.message || JSON.stringify(result);
+  
+        // Show sequences if returned
+        if (result.sequences) {
+          genOutput.innerText = "Generated Sequences:\n\n" +
+            result.sequences.map(seq => JSON.stringify(seq)).join("\n\n");
+        }
+      } catch {
+        output.innerText = "❌ Upload failed.";
+      }
+    });
+  
+    // Generate DNA Sequence
+    document.getElementById("generateForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const id = document.getElementById("generate_id").value;
+      const output = document.getElementById("generateResult");
+      output.innerText = "⏳ Generating sequence...";
+  
+      try {
+        const response = await fetch("/generate-sequence/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id })
+        });
+        const result = await response.json();
+        output.innerText = result.sequence ? result.sequence : JSON.stringify(result);
+      } catch {
+        output.innerText = "❌ Failed to generate sequence.";
+      }
+    });
+  
+    // Compare Sequences
+    document.getElementById("compareForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const id1 = document.getElementById("id1").value;
+      const id2 = document.getElementById("id2").value;
+      const output = document.getElementById("compareResult");
+      output.innerText = "🔍 Comparing sequences...";
+  
+      try {
+        const response = await fetch("/compare-sequences/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id1, id2 })
+        });
+        const result = await response.json();
+        if (response.ok) {
+          output.innerText = `✅ Similarity Score: ${result.similarity_score}`;
+        } else {
+          output.innerText = `❌ ${result.detail || "Comparison failed."}`;
+        }
+      } catch {
+        output.innerText = "❌ Comparison failed.";
+      }
+    });
+  
+    // Ask Me Anything
+    document.getElementById("askForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const question = document.getElementById("question").value;
+      const output = document.getElementById("askResult");
+      output.innerText = "💬 Thinking...";
+  
+      try {
+        const response = await fetch("/ask-me-anything/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question })
+        });
+        const result = await response.json();
+        output.innerText = result.answer || "No answer returned.";
+      } catch {
+        output.innerText = "❌ Question failed.";
+      }
+    });
+  </script>
+  
+</body>
+</html>
