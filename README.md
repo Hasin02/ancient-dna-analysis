@@ -41,7 +41,11 @@ The server will run at http://localhost:8000
 
 
 🔌 API Endpoints
+
+
 📤 POST /upload-csv/
+
+
 Upload a CSV file containing ancient remains data.
 
 Required Columns: id, region, age, seed
