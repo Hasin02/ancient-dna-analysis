@@ -166,7 +166,7 @@ Logging is implemented to help debug issues.
 ### Testing 🧪
 Create a tests.py to test:
 
-### If test.py DOESN'T RUN RENAME IT AS test_app.py or app_test.py ❗❗❗❗
+### If test.py DOESN'T RUN  test_app.py❗❗❗❗
 
 CSV upload validation
 
@@ -175,6 +175,10 @@ DNA sequence generation
 Sequence comparison logic
 ```
 pytest tests.py
+```
+or
+```
+pytest tests_app.py
 ```
 Test IDs like id_0010 and id_0011 using your CLEANED_DATA.csv.
 
