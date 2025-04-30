@@ -11,6 +11,12 @@ This **FastAPI** application allows forensic researchers to analyze ancient DNA 
 
 ## 🚀 Setup Instructions
 
+### CSV FILE 
+Link:
+```
+https://docs.google.com/spreadsheets/d/11_7rotOIU48oeZDY_jwu918tl_2fx2VpuEF7jGNOHZw/edit?usp=sharing
+```
+
 ### 1. Clone the Repository
 
 ```
@@ -132,6 +138,18 @@ Consider using:
 
 Logging is implemented to help debug issues.
 
+🧪 Testing
+Create a tests.py to test:
+
+CSV upload validation
+
+DNA sequence generation
+
+Sequence comparison logic
+```
+pytest tests.py
+```
+Test IDs like id_0010 and id_0011 using your CLEANED_DATA.csv.
 
 GitHub Repository
 Link to repository : https://github.com/Hasin02/ancient-dna-analysis.git
