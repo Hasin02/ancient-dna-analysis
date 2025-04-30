@@ -3,20 +3,19 @@ Overview
 This FastAPI application provides endpoints for analyzing ancient remains DNA sequences. It supports uploading CSV files with remains data, generating DNA sequences using a provided function, comparing sequences, and answering natural language questions about the API.
 Setup Instructions
 
-Clone the Repository
+Clone the Repository:
 
-git clone <repository-url>
-cd ancient-dna-analysis
+git clone https://github.com/Hasin02/ancient-dna-analysis.git test-ancient-dna
+cd test-ancient-dna
 
+Create Variable Environment:
 
-Install Dependencies
+python -m venv venv 
+.\venv\Scripts\activate 
 
-pip install fastapi uvicorn pandas langchain-google-genai python-dotenv
+Install Dependencies: 
 
-
-Set Up Environment VariablesCreate a .env file in the project root:
-
-GOOGLE_API_KEY=your-google-api-key
+pip install -r requirements.txt  
 
 
 Run the Server
