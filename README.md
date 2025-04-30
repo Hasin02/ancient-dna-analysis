@@ -32,8 +32,27 @@ python -m venv venv
 ```
 pip install -r requirements.txt  
 ```
+### 4. Create API KEY:
+🔓 Enable Gemini API
+```
+Visit: https://console.cloud.google.com/apis/api/generativelanguage.googleapis.com
+```
+Select or create a Google Cloud project
 
-### 4. Run the Server
+Click "Enable"
+
+🔑 Get Your API Key
+```
+Go to: https://makersuite.google.com/app/apikey
+```
+Click Create API key and copy it
+
+🔐 Set the API Key in Terminal (PowerShell)
+
+```
+$env:GOOGLE_API_KEY="your_api_key_here"
+```
+### 5. Run the Server
 ```
 python main.py
 ```
