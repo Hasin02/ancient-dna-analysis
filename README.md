@@ -51,7 +51,7 @@ A FastAPI-based API for analyzing ancient DNA sequences. Upload CSV files, gener
 
 1. **Clone the Repository**:
    ```powershell
-   git clone https://github.com/yourusername/ancient-dna-analysis.git
+   git clone https://github.com/Hasin02/ancient-dna-analysis.git
    cd ancient-dna-analysis
    ```
 
