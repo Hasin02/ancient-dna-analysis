@@ -76,7 +76,7 @@ A FastAPI-based API for analyzing ancient DNA sequences. Upload CSV files, gener
 ```powershell
 python main.py
 ```
-- Access at `http://localhost:8000`.
+- Access at `http://localhost:8000` and to access Swagger UI at `http://localhost:8000/docs`
 
 ## API Endpoints
 
