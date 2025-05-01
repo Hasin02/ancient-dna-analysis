@@ -10,11 +10,15 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.prompts import PromptTemplate
 from dotenv import load_dotenv
 import logging
-from utils import sequence_cache, load_cache, save_cache, generate_dna_sequence, calculate_similarity
+import sys
+import utils
 
 # Set up logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+handler = logging.StreamHandler(sys.stdout)
+handler.setFormatter(logging.Formatter("%(levelname)s:%(name)s:%(message)s"))
+logger.handlers = [handler]
+logger.setLevel(logging.INFO)
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -31,7 +35,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 # Load sequence cache on startup
-load_cache()
+utils.load_cache()
 
 # Pydantic models
 class SequenceRequest(BaseModel):
@@ -50,7 +54,7 @@ MAX_CACHE_LEN = 5000
 # Homepage route
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(request, "index.html")
 
 @app.post("/upload-csv/")
 async def upload_csv(file: UploadFile = File(...)):
@@ -76,7 +80,7 @@ async def upload_csv(file: UploadFile = File(...)):
             logger.info(f"Processing sample ID: {id_val}")
 
             # Generate and cache sequence
-            full_seq = generate_dna_sequence(id_val, region, age, seed, MAX_CACHE_LEN)
+            full_seq = utils.generate_dna_sequence(id_val, region, age, seed, MAX_CACHE_LEN)
             if full_seq == "x":
                 logger.warning(f"Invalid sequence for ID: {id_val}")
                 continue
@@ -85,7 +89,7 @@ async def upload_csv(file: UploadFile = File(...)):
                 logger.warning(f"Sequence for ID {id_val} too long: {len(seq_to_store)}")
                 seq_to_store = seq_to_store[:MAX_CACHE_LEN]
             logger.info(f"Sequence length for ID {id_val}: {len(seq_to_store)}")
-            sequence_cache[id_val] = {
+            utils.sequence_cache[id_val] = {
                 "id": id_val,
                 "region": region,
                 "age": age,
@@ -94,7 +98,8 @@ async def upload_csv(file: UploadFile = File(...)):
             }
             count += 1
 
-        save_cache()
+        logger.info(f"sequence_cache before save: {list(utils.sequence_cache.keys())}")
+        utils.save_cache()
         logger.info(f"Cached sequences for {count} samples")
         if len(df) > max_rows:
             return {"message": f"Processed {count} of {len(df)} records (limited to {max_rows})"}
@@ -109,7 +114,7 @@ async def generate_sequence(request: SequenceRequest):
     Retrieve a cached DNA sequence for the given sample ID.
     """
     try:
-        data = sequence_cache.get(request.id)
+        data = utils.sequence_cache.get(request.id)
         if not data:
             raise HTTPException(status_code=404, detail="Sample ID not found or sequence not generated")
         seq = data["sequence"]
@@ -124,12 +129,12 @@ async def compare_sequences(request: CompareRequest):
     Compare two cached DNA sequences and return a similarity score.
     """
     try:
-        data1 = sequence_cache.get(request.id1)
-        data2 = sequence_cache.get(request.id2)
+        data1 = utils.sequence_cache.get(request.id1)
+        data2 = utils.sequence_cache.get(request.id2)
         if not data1 or not data2:
             raise HTTPException(status_code=404, detail="One or both sample IDs not found")
         seq1, seq2 = data1["sequence"], data2["sequence"]
-        score = calculate_similarity(seq1, seq2)
+        score = utils.calculate_similarity(seq1, seq2)
         return {"id1": request.id1, "id2": request.id2, "similarity_score": score}
     except Exception as e:
         logger.error(f"Error in compare_sequences: {e}")
@@ -140,8 +145,10 @@ async def ask_me_anything(request: AskRequest):
     """
     Use Gemini LLM to answer natural language questions about the API.
     """
+    logger.info(f"Received question: {request.question}")
     try:
         llm = ChatGoogleGenerativeAI(model="gemini-1.5-pro", google_api_key=os.getenv("GOOGLE_API_KEY"))
+        logger.info("Initialized ChatGoogleGenerativeAI")
         prompt = PromptTemplate(
             input_variables=["question"],
             template="""
@@ -155,12 +162,15 @@ Question: {question}
 Answer:
 """
         )
+        logger.info("Created PromptTemplate")
         chain = prompt | llm
+        logger.info("Created LLM chain")
         response = chain.invoke({"question": request.question})
+        logger.info(f"LLM response: {response.content}")
         return {"answer": response.content}
     except Exception as e:
-        logger.error(f"Error in ask-me-anything: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error in ask_me_anything: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to process question: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn
