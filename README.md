@@ -69,10 +69,6 @@ A FastAPI-based API for analyzing ancient DNA sequences. Upload CSV files, gener
 4. **Configure Environment**:
    Create `.env`:
    ```powershell
-   echo GOOGLE_API_KEY=your-google-api-key > .env
-   ```
-   or
-   ```
    $env:GOOGLE_API_KEY="your-google-api-key"
    ```
 
