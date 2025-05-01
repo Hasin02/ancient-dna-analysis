@@ -71,18 +71,25 @@ async def upload_csv(file: UploadFile = File(...)):
             raise HTTPException(status_code=400, detail="CSV missing required columns")
 
         count = 0
+        skipped = 0
         max_rows = 5000
         for _, row in df.head(max_rows).iterrows():
             id_val = str(row['id']).strip()
             region = str(row['region']).strip() if pd.notna(row['region']) else "Unknown"
-            age = int(row['age']) if pd.notna(row['age']) else 0
+            try:
+                age = int(row['age']) if pd.notna(row['age']) else 0
+            except (ValueError, TypeError) as e:
+                logger.warning(f"Invalid age for ID {id_val}: {row['age']}, skipping (error: {e})")
+                skipped += 1
+                continue
             seed = str(row['seed']).strip() if pd.notna(row['seed']) else ""
             logger.info(f"Processing sample ID: {id_val}")
 
             # Generate and cache sequence
             full_seq = utils.generate_dna_sequence(id_val, region, age, seed, MAX_CACHE_LEN)
             if full_seq == "x":
-                logger.warning(f"Invalid sequence for ID: {id_val}")
+                logger.warning(f"Invalid sequence for ID {id_val}: seed={seed}, region={region}, age={age}")
+                skipped += 1
                 continue
             seq_to_store = full_seq[:MAX_CACHE_LEN]
             if len(seq_to_store) > MAX_CACHE_LEN:
@@ -100,10 +107,14 @@ async def upload_csv(file: UploadFile = File(...)):
 
         logger.info(f"sequence_cache before save: {list(utils.sequence_cache.keys())}")
         utils.save_cache()
-        logger.info(f"Cached sequences for {count} samples")
+        logger.info(f"Cached sequences for {count} samples, skipped {skipped} invalid rows")
         if len(df) > max_rows:
-            return {"message": f"Processed {count} of {len(df)} records (limited to {max_rows})"}
-        return {"message": f"Successfully uploaded and cached {count} records"}
+            return {
+                "message": f"Processed {count} of {len(df)} records (limited to {max_rows}), skipped {skipped} invalid rows"
+            }
+        return {
+            "message": f"Successfully uploaded and cached {count} records, skipped {skipped} invalid rows"
+        }
     except Exception as e:
         logger.error(f"Error in upload_csv: {e}")
         raise HTTPException(status_code=400, detail=str(e))
