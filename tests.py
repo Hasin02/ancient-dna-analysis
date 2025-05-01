@@ -19,14 +19,15 @@ logger.setLevel(logging.INFO)
 # Initialize TestClient
 client = TestClient(app)
 
-# Fixture to create a sample CSV
+# Fixture to create a sample CSV with 1000 entries
 @pytest.fixture
 def sample_csv(tmp_path):
+    num_entries = 1000
     data = {
-        "id": ["id_0010", "id_0011"],
-        "region": ["emea", "emea"],
-        "age": [1000, 1000],
-        "seed": ["aagtaagc", "aagtaagc"]
+        "id": [f"id_{i:04d}" for i in range(num_entries)],
+        "region": ["emea"] * num_entries,
+        "age": [1000] * num_entries,
+        "seed": ["aagtaagc"] * num_entries
     }
     df = pd.DataFrame(data)
     csv_path = tmp_path / "sample.csv"
@@ -53,30 +54,32 @@ def test_upload_csv_endpoint(sample_csv):
     with open(sample_csv, "rb") as f:
         response = client.post("/upload-csv/", files={"file": ("sample.csv", f, "text/csv")})
     assert response.status_code == 200
-    assert "Successfully uploaded and cached 2 records" in response.json()["message"]
+    assert "Successfully uploaded and cached 1000 records" in response.json()["message"]
+    assert "skipped 0 invalid rows" in response.json()["message"]
     logger.info(f"sequence_cache after upload: {list(utils.sequence_cache.keys())}")
-    assert "id_0010" in utils.sequence_cache
-    assert "id_0011" in utils.sequence_cache
-    assert len(utils.sequence_cache["id_0010"]["sequence"]) <= 5000
-    assert utils.sequence_cache["id_0010"]["sequence"] != "x"
+    assert len(utils.sequence_cache) == 1000
+    assert "id_0000" in utils.sequence_cache
+    assert "id_0999" in utils.sequence_cache
+    assert len(utils.sequence_cache["id_0000"]["sequence"]) <= 5000
+    assert utils.sequence_cache["id_0000"]["sequence"] != "x"
 
 # Test sequence generation
 def test_generate_sequence_endpoint(sample_csv):
     with open(sample_csv, "rb") as f:
         client.post("/upload-csv/", files={"file": ("sample.csv", f, "text/csv")})
-    response = client.post("/generate-sequence/", json={"id": "id_0010"})
+    response = client.post("/generate-sequence/", json={"id": "id_0000"})
     assert response.status_code == 200
-    assert response.json()["id"] == "id_0010"
+    assert response.json()["id"] == "id_0000"
     assert len(response.json()["sequence"]) <= 1000  # Truncated response
 
 # Test sequence comparison
 def test_compare_sequences_endpoint(sample_csv):
     with open(sample_csv, "rb") as f:
         client.post("/upload-csv/", files={"file": ("sample.csv", f, "text/csv")})
-    response = client.post("/compare-sequences/", json={"id1": "id_0010", "id2": "id_0011"})
+    response = client.post("/compare-sequences/", json={"id1": "id_0000", "id2": "id_0001"})
     assert response.status_code == 200
-    assert response.json()["id1"] == "id_0010"
-    assert response.json()["id2"] == "id_0011"
+    assert response.json()["id1"] == "id_0000"
+    assert response.json()["id2"] == "id_0001"
     assert 0 <= response.json()["similarity_score"] <= 100
 
 # Test ask-me-anything (mock Gemini LLM and PromptTemplate)
