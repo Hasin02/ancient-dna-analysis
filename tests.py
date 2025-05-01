@@ -60,7 +60,8 @@ def test_upload_csv_endpoint(sample_csv):
     assert len(utils.sequence_cache) == 1000
     assert "id_0000" in utils.sequence_cache
     assert "id_0999" in utils.sequence_cache
-    assert len(utils.sequence_cache["id_0000"]["sequence"]) <= 5000
+    assert len(utils.sequence_cache["id_0000"]["sequence"]) == 5000  # MAX_CACHE_LEN
+    assert utils.sequence_cache["id_0000"]["sequence"].startswith("aagt")  # Verify simulated sequence
     assert utils.sequence_cache["id_0000"]["sequence"] != "x"
 
 # Test sequence generation
@@ -70,7 +71,8 @@ def test_generate_sequence_endpoint(sample_csv):
     response = client.post("/generate-sequence/", json={"id": "id_0000"})
     assert response.status_code == 200
     assert response.json()["id"] == "id_0000"
-    assert len(response.json()["sequence"]) <= 1000  # Truncated response
+    assert len(response.json()["sequence"]) == 1000  # Truncated response
+    assert response.json()["sequence"].startswith("aagt")  # Verify simulated sequence
 
 # Test sequence comparison
 def test_compare_sequences_endpoint(sample_csv):
@@ -80,7 +82,7 @@ def test_compare_sequences_endpoint(sample_csv):
     assert response.status_code == 200
     assert response.json()["id1"] == "id_0000"
     assert response.json()["id2"] == "id_0001"
-    assert 0 <= response.json()["similarity_score"] <= 100
+    assert response.json()["similarity_score"] == 100.0  # Same simulated sequences
 
 # Test ask-me-anything (mock Gemini LLM and PromptTemplate)
 @patch("main.PromptTemplate")
