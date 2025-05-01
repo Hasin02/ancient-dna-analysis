@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, UploadFile, File, HTTPException
+from fastapi import FastAPI, Request, UploadFile, File, HTTPException, BackgroundTasks
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
@@ -37,6 +37,9 @@ templates = Jinja2Templates(directory="templates")
 # Load sequence cache on startup
 utils.load_cache()
 
+# Constants
+MAX_CACHE_LEN = 5000
+
 # Pydantic models
 class SequenceRequest(BaseModel):
     id: str
@@ -48,19 +51,12 @@ class CompareRequest(BaseModel):
 class AskRequest(BaseModel):
     question: str
 
-# Define a maximum sequence length to store
-MAX_CACHE_LEN = 5000
-
-# Homepage route
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
     return templates.TemplateResponse(request, "index.html")
 
 @app.post("/upload-csv/")
-async def upload_csv(file: UploadFile = File(...)):
-    """
-    Upload a CSV, generate and cache DNA sequences for each sample.
-    """
+async def upload_csv(file: UploadFile = File(...), background_tasks: BackgroundTasks):
     if not file.filename.endswith('.csv'):
         raise HTTPException(status_code=400, detail="File must be a CSV")
     try:
@@ -70,82 +66,63 @@ async def upload_csv(file: UploadFile = File(...)):
         if not required_columns.issubset(df.columns):
             raise HTTPException(status_code=400, detail="CSV missing required columns")
 
-        count = 0
-        skipped = 0
-        max_rows = 5000
-        for _, row in df.head(max_rows).iterrows():
-            id_val = str(row['id']).strip()
-            region = str(row['region']).strip() if pd.notna(row['region']) else "Unknown"
-            try:
-                age = int(row['age']) if pd.notna(row['age']) else 0
-            except (ValueError, TypeError) as e:
-                logger.warning(f"Invalid age for ID {id_val}: {row['age']}, skipping (error: {e})")
-                skipped += 1
-                continue
-            seed = str(row['seed']).strip() if pd.notna(row['seed']) else ""
-            logger.info(f"Processing sample ID: {id_val}")
-
-            # Generate and cache sequence
-            full_seq = utils.generate_dna_sequence(id_val, region, age, seed, MAX_CACHE_LEN)
-            if full_seq == "x":
-                logger.warning(f"Invalid sequence for ID {id_val}: seed={seed}, region={region}, age={age}")
-                skipped += 1
-                continue
-            seq_to_store = full_seq[:MAX_CACHE_LEN]
-            if len(seq_to_store) > MAX_CACHE_LEN:
-                logger.warning(f"Sequence for ID {id_val} too long: {len(seq_to_store)}")
-                seq_to_store = seq_to_store[:MAX_CACHE_LEN]
-            logger.info(f"Sequence length for ID {id_val}: {len(seq_to_store)}")
-            utils.sequence_cache[id_val] = {
-                "id": id_val,
-                "region": region,
-                "age": age,
-                "seed": seed,
-                "sequence": seq_to_store
-            }
-            count += 1
-
-        logger.info(f"sequence_cache before save: {list(utils.sequence_cache.keys())}")
-        utils.save_cache()
-        logger.info(f"Cached sequences for {count} samples, skipped {skipped} invalid rows")
-        if len(df) > max_rows:
-            return {
-                "message": f"Processed {count} of {len(df)} records (limited to {max_rows}), skipped {skipped} invalid rows"
-            }
-        return {
-            "message": f"Successfully uploaded and cached {count} records, skipped {skipped} invalid rows"
-        }
+        background_tasks.add_task(process_csv_async, df.to_dict("records"))
+        return {"message": "Upload received. Processing in background."}
     except Exception as e:
         logger.error(f"Error in upload_csv: {e}")
         raise HTTPException(status_code=400, detail=str(e))
 
+def process_csv_async(records):
+    count = 0
+    skipped = 0
+    for row in records:
+        try:
+            id_val = str(row['id']).strip()
+            region = str(row['region']).strip() if row['region'] else "Unknown"
+            age = int(row['age']) if row['age'] else 0
+            seed = str(row['seed']).strip() if row['seed'] else ""
+        except Exception as e:
+            logger.warning(f"Skipping invalid row: {row}")
+            skipped += 1
+            continue
+
+        full_seq = utils.generate_dna_sequence(id_val, region, age, seed, MAX_CACHE_LEN)
+        if full_seq == "x":
+            logger.warning(f"Invalid sequence for ID {id_val}")
+            skipped += 1
+            continue
+
+        utils.sequence_cache[id_val] = {
+            "id": id_val,
+            "region": region,
+            "age": age,
+            "seed": seed,
+            "sequence": full_seq[:MAX_CACHE_LEN]
+        }
+        count += 1
+
+    logger.info(f"Finished background processing: {count} saved, {skipped} skipped")
+    utils.save_cache()
+
 @app.post("/generate-sequence/")
 async def generate_sequence(request: SequenceRequest):
-    """
-    Retrieve a cached DNA sequence for the given sample ID.
-    """
     try:
         data = utils.sequence_cache.get(request.id)
         if not data:
             raise HTTPException(status_code=404, detail="Sample ID not found or sequence not generated")
-        seq = data["sequence"]
-        return {"id": request.id, "sequence": seq[:1000]}
+        return {"id": request.id, "sequence": data["sequence"][:1000]}
     except Exception as e:
         logger.error(f"Error in generate_sequence for ID {request.id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/compare-sequences/")
 async def compare_sequences(request: CompareRequest):
-    """
-    Compare two cached DNA sequences and return a similarity score.
-    """
     try:
         data1 = utils.sequence_cache.get(request.id1)
         data2 = utils.sequence_cache.get(request.id2)
         if not data1 or not data2:
             raise HTTPException(status_code=404, detail="One or both sample IDs not found")
-        seq1, seq2 = data1["sequence"], data2["sequence"]
-        score = utils.calculate_similarity(seq1, seq2)
+        score = utils.calculate_similarity(data1["sequence"], data2["sequence"])
         return {"id1": request.id1, "id2": request.id2, "similarity_score": score}
     except Exception as e:
         logger.error(f"Error in compare_sequences: {e}")
@@ -153,13 +130,9 @@ async def compare_sequences(request: CompareRequest):
 
 @app.post("/ask-me-anything/")
 async def ask_me_anything(request: AskRequest):
-    """
-    Use Gemini LLM to answer natural language questions about the API.
-    """
     logger.info(f"Received question: {request.question}")
     try:
         llm = ChatGoogleGenerativeAI(model="gemini-1.5-pro", google_api_key=os.getenv("GOOGLE_API_KEY"))
-        logger.info("Initialized ChatGoogleGenerativeAI")
         prompt = PromptTemplate(
             input_variables=["question"],
             template="""
@@ -173,11 +146,8 @@ Question: {question}
 Answer:
 """
         )
-        logger.info("Created PromptTemplate")
         chain = prompt | llm
-        logger.info("Created LLM chain")
         response = chain.invoke({"question": request.question})
-        logger.info(f"LLM response: {response.content}")
         return {"answer": response.content}
     except Exception as e:
         logger.error(f"Error in ask_me_anything: {str(e)}")
