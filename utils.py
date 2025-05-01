@@ -3,9 +3,14 @@ import json
 import os
 import logging
 import difflib
+import sys
 
 # Set up logging
 logger = logging.getLogger(__name__)
+handler = logging.StreamHandler(sys.stdout)
+handler.setFormatter(logging.Formatter("%(levelname)s:%(name)s:%(message)s"))
+logger.handlers = [handler]
+logger.setLevel(logging.INFO)
 
 # In-memory sequence cache
 sequence_cache = {}
@@ -21,8 +26,12 @@ def load_cache():
             with open(CACHE_FILE, "r") as f:
                 sequence_cache = json.load(f)
             logger.info(f"Loaded {len(sequence_cache)} sequences from {CACHE_FILE}")
+        else:
+            sequence_cache = {}
+            logger.info(f"No cache file found at {CACHE_FILE}, initialized empty cache")
     except Exception as e:
         logger.error(f"Error loading cache: {e}")
+        sequence_cache = {}
 
 def save_cache():
     """Save sequence cache to JSON file."""
